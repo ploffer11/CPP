@@ -10,58 +10,52 @@ const int INF = 0x3f3f3f3f;
 //const ll INF = 0x3f3f3f3f3f3f3f3f;
 const int MOD = 1e9 + 7;
 
-int arr[3][10005];
+const int UP = 0;
+const int DOWN = 1;
+const int ALL = 2;
+
+int arr[2][10005];
 int dp[3][10005];
 int n, w;
 
 int f(int i, int j)
 {
+    if (j <= 0)
+        return 0;
+
+    if (j == 1)
+    {
+        if (i == UP || i == DOWN)
+            return 1;
+        else
+            return (arr[UP][1] + arr[DOWN][1] <= w ? 1 : 2);
+    }
 
     if (dp[i][j] != -1)
         return dp[i][j];
 
-    int g = 0, h = 0;
-    if (j >= 2)
-        g = arr[1][i - 2], h = arr[2][i - 2];
-
-    int a = arr[1][i - 1], b = arr[2][i - 1];
-    int c = arr[1][i], d = arr[2][i];
-
-    int &x = dp[i][j];
-    int _1 = f(1, i - 1), _2 = f(2, i - 1), _3 = f(1, i - 2), _4 = f(2, i - 2);
-
-    if (c + d <= w)
-        x = min(x, _1 + _2 + 1);
-    else
-        x = min(x, _1 + _2 + 2);
-
-    if (a + c <= w && b + d <= w)
-        x = min(x, _3 + _4 + 2);
-    if (a + c <= w)
-        x = min(x, _3 + _2 + 1);
-    if (b + d <= w)
-        x = min(x, _4 + _1 + 1);
-
-    return dp[i][j] = x;
+    int ret = INF;
+    if (i == UP)
+        ret = min(f(DOWN, j - 1) + (arr[UP][j - 1] + arr[UP][j] <= w ? 1 : 2), f(ALL, j - 1) + 1);
+    if (i == DOWN)
+        ret = min(f(UP, j - 1) + (arr[DOWN][j - 1] + arr[DOWN][j] <= w ? 1 : 2), f(ALL, j - 1) + 1);
+    if (i == ALL)
+        ret = min({
+            f(ALL, j - 1) + (arr[UP][j] + arr[DOWN][j] <= w ? 1 : 2),
+            f(DOWN, j - 1) + (arr[UP][j - 1] + arr[UP][j] <= w ? 1 : 2) + 1,
+            f(DOWN, j - 1) + (arr[UP][j] + arr[DOWN][j] <= w ? 1 : 2) + 1,
+            f(UP, j - 1) + (arr[DOWN][j - 1] + arr[DOWN][j] <= w ? 1 : 2) + 1,
+            f(UP, j - 1) + (arr[UP][j] + arr[DOWN][j] <= w ? 1 : 2) + 1,
+            f(ALL, j - 2) + (arr[UP][j - 1] + arr[UP][j] <= w ? 1 : 2) + (arr[DOWN][j - 1] + arr[DOWN][j] <= w ? 1 : 2),
+            f(ALL, j - 2) + (arr[UP][j] + arr[DOWN][j] <= w ? 1 : 2) + (arr[UP][j - 1] + arr[DOWN][j - 1] <= w ? 1 : 2),
+        });
+    return dp[i][j] = ret;
 }
 
-void init(bool flag)
-{
-    for (int i = 1; i <= 2; i++)
-    {
-        for (int j = 1; j <= n; j++)
-        {
-            dp[j] = -1;
-            if (flag)
-                arr[i][j] = 0;
-        }
-    }
-}
 main()
 {
     cin.tie(0);
     ios::sync_with_stdio(0);
-    memset(dp, -1, sizeof(dp));
 
     int t;
     cin >> t;
@@ -69,26 +63,59 @@ main()
     {
         cin >> n >> w;
 
-        for (int i = 1; i <= 2; i++)
+        for (int i = 0; i < 2; i++)
             for (int j = 1; j <= n; j++)
                 cin >> arr[i][j];
 
-        auto [a, b, c, d] = tuple<int, int, int, int>(arr[1][1], arr[2][1], arr[1][n], arr[2][n]);
+        if (n == 1)
+        {
+            cout << (arr[0][1] + arr[1][1] <= w ? 1 : 2) << "\n";
+            continue;
+        }
 
-        int x = f(n, 0);
-        init(false);
+        int &a = arr[0][1];
+        int &b = arr[1][1];
+        int &c = arr[0][n];
+        int &d = arr[1][n];
 
-        arr[1][1] = arr[2][1] = 0;
+        memset(dp, -1, sizeof(dp));
+        int ans = f(ALL, n);
 
-        int y = f(n - 1, 1);
-        init(true);
+        if (a + c <= w)
+        {
+            int _a = a, _c = c;
+            a = w;
+            c = w;
 
-        cout << x << " < - >  " << y << "\n";
+            memset(dp, -1, sizeof(dp));
+            ans = min(ans, f(ALL, n) - 1);
+            a = _a;
+            c = _c;
+        }
+
+        if (b + d <= w)
+        {
+            int _b = b, _d = d;
+            b = w;
+            d = w;
+
+            memset(dp, -1, sizeof(dp));
+            ans = min(ans, f(ALL, n) - 1);
+            b = _b;
+            d = _d;
+        }
+
         if (a + c <= w && b + d <= w)
-            cout << min(x, y + 2) << "\n";
-        else if (a + c <= w || b + d <= w)
-            cout << min(x, y + 3) << "\n";
-        else
-            cout << min(x, y + 4) << "\n";
+        {
+            a = w;
+            b = w;
+            c = w;
+            d = w;
+
+            memset(dp, -1, sizeof(dp));
+            ans = min(ans, f(ALL, n) - 2);
+        }
+
+        cout << ans << "\n";
     }
 }

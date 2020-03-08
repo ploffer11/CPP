@@ -41,6 +41,7 @@ main()
     {
         for (int i = 0; i <= 1000; i++)
             adj[i].clear();
+
         memset(board, 0, sizeof(board));
         memset(dis, 0x3f, sizeof(dis));
         memset(visit, 0, sizeof(visit));
@@ -104,7 +105,6 @@ main()
             q.pop();
             inq[s] = false;
 
-            //cout << s << " -> " << dis[s] << "\n";
             if (cycle[s] >= OFFSET)
                 continue;
 
@@ -112,10 +112,10 @@ main()
             {
                 if (dis[e] > dis[s] + cost)
                 {
-                    cycle[e]++;
                     dis[e] = dis[s] + cost;
                     if (!inq[e])
                     {
+                        cycle[e]++;
                         q.push(e);
                         inq[e] = true;
                     }
@@ -123,50 +123,19 @@ main()
             }
         }
 
-        if (dis[f(n - 1, m - 1)] >= INF)
+        bool cycle_flag = false;
+        for (int i = f(0, 0); i <= f(n - 1, m - 1); i++)
+        {
+            if (cycle[i] >= OFFSET)
+            {
+                cycle_flag = true;
+            }
+        }
+        if (cycle_flag)
+            cout << "Never\n";
+        else if (dis[f(n - 1, m - 1)] >= INF)
             cout << "Impossible\n";
         else
-        {
-            queue<int> q;
-            for (int i = f(0, 0); i <= f(n - 1, m - 1); i++)
-            {
-                if (cycle[i] >= OFFSET)
-                {
-                    q.push(i);
-                    visit[i] = true;
-                }
-            }
-
-            if (!q.empty())
-            {
-                bool cycle_flag = false;
-                while (!q.empty())
-                {
-                    int s = q.front();
-                    q.pop();
-                    if (s == f(n - 1, m - 1))
-                    {
-                        cycle_flag = true;
-                        break;
-                    }
-
-                    for (auto [e, _] : adj[s])
-                    {
-                        if (!visit[e])
-                        {
-                            visit[e] = true;
-                            q.push(e);
-                        }
-                    }
-                }
-
-                if (cycle_flag)
-                    cout << "Never\n";
-                else
-                    cout << dis[f(n - 1, m - 1)] << "\n";
-            }
-            else
-                cout << dis[f(n - 1, m - 1)] << "\n";
-        }
+            cout << dis[f(n - 1, m - 1)] << "\n";
     }
 }
