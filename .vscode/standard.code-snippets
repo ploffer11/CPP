@@ -2072,7 +2072,7 @@
       "        auto [x2, y2] = b;",
       "        auto [x3, y3] = c;",
       "        auto ret = (x2 - x1) * (y3 - y2) - (y2 - y1) * (x3 - x2);",
-      "        return ret / abs(ret);",
+      "        return (ret == 0 ? ret : ret / abs(ret));",
       "    }",
       "",
       "public:",
