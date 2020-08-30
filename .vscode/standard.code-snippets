@@ -19,7 +19,7 @@
       "main()",
       "{",
       "\tcin.tie(0);",
-      "\tios::sync_with_stdio(0);",
+      "\tcin.sync_with_stdio(0);",
       "\t$0",
       "}"
     ],
@@ -655,7 +655,6 @@
       "        }",
       "    }",
       "public:",
-      "    vector<int> p;",
       "    CentroidDecomposition(int n) : adj(n + 1), sz(n + 1), del(n + 1), p(n + 1) {}",
       "",
       "    void add_edge(int u, int v)",
