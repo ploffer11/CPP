@@ -6,6 +6,7 @@
 using namespace std;
 typedef pair<int, int> pii;
 const int MAX = 501;
+const int INF = 0x3f3f3f3f;
 
 priority_queue<pii, vector<pii>, greater<pii>> pq;
 
@@ -16,8 +17,9 @@ int adj[MAX][MAX];
 int dis[MAX];
 int found[MAX];
 
+bool visit[MAX];
+
 int N, M, S, D, A, B, C;
-const int Big = 987654321;
 
 int dijkstra(int start, int end);
 void removeit(int end);
@@ -29,6 +31,10 @@ int main()
 	while ( 1 )
 	{
 		memset(adj, 0, sizeof(adj));
+		memset(visit, 0, sizeof(visit));
+		for (int i = 0; i < N; i++)
+			adj2[i].clear(); 
+			
 		cin >> N >> M;
 		if ( N + M == 0 ) break;
 		cin >> S >> D;
@@ -36,69 +42,66 @@ int main()
 		{
 			cin >> A >> B >> C;
 			adj[A][B] = C;
+			adj2[A].push_back({B, C});
 		}
 
 		dijkstra(S, D);
 		removeit(D);
 		int Ans = dijkstra(S, D);
-		if ( Ans == Big ) cout << "-1\n";
+		
+		if ( Ans == INF ) cout << "-1\n";
 		else cout << Ans << "\n";
 	}
 }
 
 int dijkstra(int start, int end)
 {
-	for ( int i = 0; i < N; i++ )
-	{
-		dis[i] = Big;
-		found[i] = 0;
+	memset(found, 0, sizeof(found));
+	memset(dis, 0x3f, sizeof(dis));
+	for (int i = 0; i < N; i++)
 		via[i].clear();
-	}
+	
 	dis[start] = 0;
 	pq.push(pii(0, start));
-	for ( int i = 0; i < N; i++ )
+	
+	int s;
+	while ( !pq.empty() )
 	{
-		int x = -1;
-		while ( !pq.empty() )
+		s = pq.top().second;
+		pq.pop();
+		if (found[s])
+			continue;
+		found[s] = 1;
+		for (auto [e, w] : adj2[s])
 		{
-			cout << i << " <- " << endl;
-			x = pq.top().second;
-			pq.pop();
-			if (found[x])
+			if ( adj[s][e] == 0 ) 
 				continue;
-			found[x] = 1;
-			for (auto [j, w] : adj2[x])
+			if ( dis[s] + w < dis[e] )
 			{
-				if ( adj[x][j] == 0 ) 
-					continue;
-				int Node = j, Weight = adj[x][j];
-				if ( dis[x] + Weight < dis[Node] )
-				{
-					dis[Node] = dis[x] + Weight;
-					if ( via[Node].empty() ) 
-						via[Node].push_back(x);
-					else
-					{
-						via[Node].clear();
-						via[Node].push_back(x);
-					}
-					pq.push(pii(dis[Node], Node));
-				}
-				else if ( dis[x] + Weight == dis[Node] )
-				{
-					via[Node].push_back(x);
-				}
+				dis[e] = dis[s] + w;
+				if ( !via[e].empty() ) 
+					via[e].clear();
+				
+				via[e].push_back(s);
+				pq.push(pii(dis[e], e));
+			}
+			else if ( dis[s] + w == dis[e] )
+			{
+				via[e].push_back(s);
 			}
 		}
 	}
+	
 	return dis[end];
 }
 
-void removeit(int end)
+void removeit(int e)
 {
-	for ( auto j : via[end] )
+	visit[e] = true;
+	for ( auto s : via[e] )
 	{
-		adj[j][end] = 0;
-		removeit(j);
+		if (!visit[s])
+			removeit(s);
+		adj[s][e] = 0;
 	}
 }
