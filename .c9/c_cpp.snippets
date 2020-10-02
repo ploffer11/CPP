@@ -17,6 +17,11 @@ snippet ps
 	//const ll INF = 0x3f3f3f3f3f3f3f3f;
 	const int MOD = 1e9 + 7;
 	const int MAX = -1;
+
+	#define all(x) x.begin(), x.end()
+	#define compress(x) sort(all(x)), x.resize(unique(all(x)) - x.begin()); 
+	#define compress_function(x, f) auto f = [&](ll k){ return lower_bound(all(x), k) - x.begin(); };
+	
 	
 	main()
 	{
@@ -2727,6 +2732,205 @@ snippet dinic
 					B.push_back(i - a);
 	
 			return {A, B};
+		}
+	};
+# ==============================================
+
+# ==============================================
+snippet hungarian
+	class Hungarian
+	{
+	private:
+		int n, m;
+		vector<vector<int>> mat;
+		vector<int> matched;
+		
+	public:
+		Hungarian(int n, int m) : n(n), m(m), mat(n + 1, vector<int>(m + 1)), matched(n + 1)  {}
+		
+		void update(int i, int j, int v) 
+		{
+			mat[i][j] = v;
+		}
+		
+		int hungarian()
+		{
+			vector<int> u(n + 1), v(m + 1), p(m + 1), way(m + 1), minv(m + 1);
+			vector<char> used(m + 1);
+			for (int i = 1; i <= n; ++i) 
+			{
+				p[0] = i;
+				int j0 = 0;
+				fill(minv.begin(), minv.end(), INF);
+				fill(used.begin(), used.end(), false);
+				do 
+				{
+					used[j0] = true;
+					int i0 = p[j0], delta = INF, j1;
+					for (int j = 1; j <= m; ++j) 
+					{
+						if (!used[j]) 
+						{
+							int cur = mat[i0][j] - u[i0] - v[j];
+							if (cur < minv[j]) minv[j] = cur, way[j] = j0;
+							if (minv[j] < delta) delta = minv[j], j1 = j;
+						}
+					}
+					for (int j = 0; j <= m; ++j) 
+					{
+						if (used[j])
+							u[p[j]] += delta, v[j] -= delta;
+						else
+							minv[j] -= delta;
+					}
+					j0 = j1;
+				} while (p[j0] != 0);
+				do 
+				{
+					int j1 = way[j0];
+					p[j0] = p[j1];
+					j0 = j1;
+				} while (j0);
+			}
+			for (int j = 1; j <= m; ++j) 
+				matched[p[j]] = j;
+			return -v[0];
+		}
+	};
+# ==============================================
+
+# ==============================================
+snippet offline_dynamic_connectivity 
+	class OfflineDynamicConnectivity
+	{
+	private:
+		enum { ADD, DELETE, QUERY };
+		int n, q, q_cnt = 0;
+		vector<tuple<int, int, int, int>> st, upd_vt;
+		vector<vector<pii>> tree;
+		vector<pii> Q;
+		vector<int> parent, rank, ans;
+		
+		int find(int me)
+		{
+			if (parent[me] < 0)
+				return me;
+			else 
+				return find(parent[me]);
+		}
+		
+		bool uni(int u, int v)
+		{
+			u = find(u), v = find(v);
+			if (u == v)
+				return false;
+			if (rank[u] < rank[v])
+				swap(u, v);
+			
+			st.push_back({v, parent[v], u, rank[u]});
+			parent[v] = u;
+			rank[u] = max(rank[v], rank[u] + 1);
+			return true;
+		}
+		
+		void update(int i, int s, int e, int l, int r, pii v)
+		{
+			if (l > e || r < s)
+				return;
+				
+			if (l <= s && e <= r)
+			{
+				tree[i].push_back(v);
+				return;
+			}
+			int m = (s + e) >> 1;
+			update(i << 1, s, m, l, r, v);
+			update(i << 1 | 1, m + 1, e, l, r, v);
+		}
+		
+		void rollback(int k)
+		{
+			while (k--)
+			{
+				auto [w, x, y, z] = st.back();
+				st.pop_back();
+				parent[w] = x;
+				rank[y] = z;
+			}
+		}
+		
+		
+		void solve(int i, int s, int e)
+		{
+			int k = 0;
+			
+			for (auto [u, v] : tree[i])
+				if (uni(u, v))
+					k++;
+			
+			if (s == e)
+			{
+				if (Q[s].first != -1)
+					ans.push_back(find(Q[s].first) == find(Q[s].second));
+				
+				rollback(k);
+				return;
+			}
+			
+			int m = (s + e) >> 1;
+			solve(i << 1, s, m);
+			solve(i << 1 | 1, m + 1, e);
+			rollback(k);
+		}
+	
+	public:
+		OfflineDynamicConnectivity(int n, int q) : n(n), q(q), parent(n + 1, -1), rank(n + 1, 1), tree(4 * (q + 1)), Q(q + 1, pii(-1, -1)) {}
+		
+		void add_edge(int u, int v)
+		{
+			upd_vt.push_back({min(u, v), max(u, v), ++q_cnt, ADD});
+		}
+		
+		void delete_edge(int u, int v)
+		{
+			upd_vt.push_back({min(u, v), max(u, v), ++q_cnt, DELETE});
+		}
+		
+		void query(int u, int v)
+		{
+			Q[++q_cnt] = {min(u, v), max(u, v)};
+		}
+		
+		vector<int> get_ans()
+		{
+			vector<tuple<int, int, int, int>> edge;
+			sort(upd_vt.begin(), upd_vt.end());
+			
+			for (int i = 0; i < upd_vt.size() - 1; i++)
+			{
+				auto [u1, v1, idx1, q1] = upd_vt[i];
+				auto [u2, v2, idx2, q2] = upd_vt[i + 1];
+				
+				if (u1 == u2 && v1 == v2)
+				{
+					if (q1 == ADD && q2 == DELETE)
+						edge.push_back({u1, v1, idx1, idx2});
+				}
+				else if (q1 == ADD)
+				{
+					edge.push_back({u1, v1, idx1, q});
+				}
+			}
+			
+			auto [u, v, idx, x] = upd_vt.back();
+			if (x == ADD)
+				edge.push_back({u, v, idx, q});
+				
+			for (auto [u, v, l, r] : edge)
+				update(1, 1, q, l, r, pii(u, v));
+			
+			solve(1, 1, q);
+			return ans;
 		}
 	};
 # ==============================================
