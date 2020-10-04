@@ -1,7 +1,6 @@
 import random
-MAX = int(1e13)
-N = 1000
-print(random.randint(1, MAX), random.randint(1, MAX), N)
 
-for i in range(N):
-    print(i)
+MAX = 200000
+print(MAX)
+for i in range(MAX):
+    print(random.randint(1, (1 << 30) - 10), sep=" ")
